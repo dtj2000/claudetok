@@ -44,6 +44,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8737
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', 8737))
     print(f'ClaudeTok running at http://localhost:{port}  (Ctrl+C to stop)', flush=True)
     ThreadingHTTPServer(('127.0.0.1', port), Handler).serve_forever()
