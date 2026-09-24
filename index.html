@@ -59,7 +59,10 @@
     <section class="sheet" id="comments">
       <header><span id="comments-title">comments</span><button class="sheet-close" data-close>✕</button></header>
       <ul id="comments-list"></ul>
-      <div class="comment-input"><span>add comment...</span><span>@ 🙂</span></div>
+      <form class="comment-input" id="comment-form" autocomplete="off">
+        <input id="comment-text" maxlength="140" placeholder="add comment...">
+        <button type="submit" aria-label="post">➤</button>
+      </form>
     </section>
 
     <!-- browse: search, profiles, hashtags (filled by app.js) -->

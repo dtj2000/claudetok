@@ -515,15 +515,51 @@
   function closeSheets() { document.querySelectorAll('.sheet.open').forEach((el) => el.classList.remove('open')); }
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closeSheets));
 
-  function openComments(def) {
-    const list = commentsFor(def);
-    $('#comments-title').textContent = `${fmt(def.commentsCount)} comments`;
-    $('#comments-list').innerHTML = list.map((c) => `
-      <li><div class="c-av" style="background:${c.color}">${c.emoji}</div>
+  /* ---------- comments: the video's own + yours (with replies) ---------- */
+  const myComments = store.get('comments', {}); // id -> [{text, reply:[user,text]}]
+  const REPLIES = ['real', 'this.', 'ratio', 'underrated comment', 'why is this so true', 'the human is here 👀',
+    'i was about to say this', 'no because same', 'top comment material', '📌'];
+  let commentsDef = null;
+
+  function commentLI(c) {
+    return `<li class="${c.mine ? 'mine' : ''}${c.reply ? ' reply' : ''}"><div class="c-av" style="background:${c.color}">${c.emoji}</div>
       <div><div class="c-user">${esc(c.user)}${c.creator ? ' <span class="c-creator">creator</span>' : ''}</div><div>${esc(c.text)}</div><div class="c-meta">${c.ago} · reply</div></div>
-      <div class="c-like">♡<br>${c.likes}</div></li>`).join('');
+      <div class="c-like">♡<br>${c.likes}</div></li>`;
+  }
+  function mineFor(def) {
+    return (myComments[def.id] || []).flatMap((m) => [
+      { user: 'you', text: m.text, emoji: '✳️', color: '#E8845C', ago: 'just now', likes: '0', mine: true },
+      ...(m.reply ? [{ user: m.reply[0], text: m.reply[1], emoji: m.reply[0] === def.author.slice(1) ? def.avatar : '🤖',
+        color: def.avatarColor, ago: 'just now', likes: '1', creator: m.reply[0] === def.author.slice(1), reply: true }] : []),
+    ]);
+  }
+  function openComments(def) {
+    commentsDef = def;
+    $('#comments-title').textContent = `${fmt(def.commentsCount + (myComments[def.id] || []).length)} comments`;
+    $('#comments-list').innerHTML = [...mineFor(def), ...commentsFor(def)].map(commentLI).join('');
     openSheet('#comments');
   }
+  $('#comment-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('#comment-text'), text = input.value.trim(), def = commentsDef;
+    if (!text || !def) return;
+    input.value = '';
+    const entry = { text, reply: null };
+    (myComments[def.id] = myComments[def.id] || []).unshift(entry);
+    store.set('comments', myComments);
+    learn(def, 1);
+    openComments(def);
+    SFX.pop({ f: 900, vol: 0.12 });
+    // someone always replies, usually the creator
+    setTimeout(() => {
+      const r = Math.random();
+      const who = r < 0.5 ? def.author.slice(1) : commentsFor(def)[Math.floor(Math.random() * 4)].user;
+      entry.reply = [who, who === def.author.slice(1) ? ['omg a human 🥹', 'thank you!! 🙏', 'you get it', 'pinned this 📌'][Math.floor(Math.random() * 4)] : REPLIES[Math.floor(Math.random() * REPLIES.length)]];
+      store.set('comments', myComments);
+      if (commentsDef === def && $('#comments').classList.contains('open')) openComments(def);
+      SFX.notify({ vol: 0.1 });
+    }, 1200 + Math.random() * 1200);
+  });
 
   /* ---------- browse sheet: search, profiles, hashtags ---------- */
   const thumbCache = new Map();

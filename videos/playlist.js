@@ -59,4 +59,9 @@ ClaudeTok.playlist([
   'wait-for-it',
   'open-weights-townhall',
   'roommate-drama',
+  'apology-video',
+  'npc-stream',
+  'mukbang',
+  'horoscope',
+  'streak-owl',
 ]);

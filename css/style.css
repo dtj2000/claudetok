@@ -234,7 +234,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sheet .c-creator { background: #fe2c55; color: #fff; font-size: 2.4cqw; padding: .1cqw 1.2cqw; border-radius: 1cqw; margin-left: 1cqw; vertical-align: .2cqw; }
 .sheet .c-meta { color: #a09aa8; font-size: 2.9cqw; margin-top: .6cqw; }
 .sheet .c-like { margin-left: auto; color: #a09aa8; font-size: 2.9cqw; text-align: center; flex: none; }
-.comment-input { display: flex; justify-content: space-between; margin: 3cqw 4cqw 4cqw; padding: 3cqw 4cqw; background: #eee7da; border-radius: 6cqw; color: #9a93a3; font-size: 3.5cqw; }
+.comment-input { display: flex; gap: 2cqw; margin: 3cqw 4cqw 4cqw; padding: 1.2cqw 1.2cqw 1.2cqw 4cqw; background: #eee7da; border-radius: 6cqw; }
+.comment-input input { flex: 1; border: 0; outline: 0; background: none; font: 700 3.6cqw "Nunito", sans-serif; color: var(--ink); min-width: 0; }
+.comment-input button { width: 9cqw; height: 9cqw; border-radius: 50%; background: #fe2c55; color: #fff; font-size: 3.8cqw; }
+.sheet li.mine { background: #fdf0e6; border-radius: 2cqw; margin: 0 -2cqw; padding-left: 2cqw; padding-right: 2cqw; }
+.sheet li.reply { padding-left: 10cqw; }
 
 /* browse sheet: search / profiles / hashtags */
 .sheet.short { height: auto; }
