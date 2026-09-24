@@ -91,4 +91,7 @@ ClaudeTok.playlist([
   'ink-haiku',
   'ink-zen-wait',
   'ink-tortoise-hare',
+  'pixel-wild-bug',
+  'pixel-legacy-boss',
+  'pixel-token-run',
 ]);

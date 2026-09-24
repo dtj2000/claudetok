@@ -813,6 +813,7 @@
     SFX.setMuted(m);
     store.set('muted', m);
     $('#btn-mute').textContent = m ? '🔇' : '🔊';
+    $('#btn-mute-in').textContent = m ? '🔇' : '🔊';
   }
 
   function setSpeed(v, quiet) {
@@ -833,6 +834,12 @@
 
   function wireChrome() {
     $('#btn-mute').addEventListener('click', () => setMuted(!SFX.muted));
+    $('#btn-mute-in').addEventListener('click', () => setMuted(!SFX.muted));
+    // never play sound from a tab you can't see
+    document.addEventListener('visibilitychange', () => {
+      if (!SFX.ctx) return;
+      if (document.hidden) SFX.ctx.suspend(); else if (started) SFX.ctx.resume();
+    });
     $('#btn-auto').addEventListener('click', () => setAuto(!autoMode));
     $('#btn-speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]));
     setSpeed(speed, true);
@@ -994,6 +1001,7 @@
   async function boot() {
     SFX.muted = store.get('muted', false);
     $('#btn-mute').textContent = SFX.muted ? '🔇' : '🔊';
+    $('#btn-mute-in').textContent = SFX.muted ? '🔇' : '🔊';
     wireChrome();
     startClock();
     drawSplash();
