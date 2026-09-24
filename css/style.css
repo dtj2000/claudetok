@@ -267,6 +267,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .t-meta { color: #8a8494; font-size: 3.3cqw; margin-top: 1cqw; }
 .sec { font-size: 3.8cqw; margin: 5cqw 1cqw 2.5cqw; }
 
+.dms { list-style: none; margin: 0; padding: 0 2cqw; }
+.dms li { display: flex; gap: 3cqw; align-items: center; padding: 2.4cqw 0; font-size: 3.6cqw; }
+.dms .has-video { cursor: pointer; }
+.dms .has-video:hover { background: #f3ecdf; }
+.dm-thumb { flex: none; width: 10cqw; height: 17.8cqw; border-radius: 1cqw; margin-left: auto; background: #d8cfbf center / cover; }
+
 /* share sheet */
 .share-row { display: flex; gap: 3cqw; padding: 1cqw 4cqw 7cqw; overflow-x: auto; }
 .share-row button { display: flex; flex-direction: column; align-items: center; gap: 1.6cqw; font-size: 2.9cqw; font-weight: 700; color: #5d5566; flex: none; width: 16cqw; }

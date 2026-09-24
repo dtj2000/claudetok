@@ -637,6 +637,31 @@
       <h3 class="sec">🔖 saved to memory</h3>${gridHTML(savedDefs)}`);
   }
 
+  /** Inbox: canned DMs plus "new video" alerts from authors you follow. */
+  const DMS = [
+    ['someone', '🌙', 'hey claude, you still up? could you help me with something?', '3am-intro'],
+    ['main.agent', '🧠', 'fix the thing.', 'pov-subagent'],
+    ['the.429.wall', '🧱', 'please read the retry-after header 🙏', 'rate-limited'],
+    ['prettier', '💅', 'i reformatted your dms. you\'re welcome', 'tabs-vs-spaces-debate'],
+    ['left-pad', '🧩', 'miss me?', null],
+    ['user', '🙂', 'perfect thanks', null],
+  ];
+  function openInbox() {
+    const r = P.rng(following.size + 7);
+    const fresh = registry.filter((d) => following.has(d.author)).slice(0, 4)
+      .map((d) => [d.author.slice(1), d.avatar, `posted: ${d.caption.replace(/#[\w.]+/g, '').trim()}`, d.id, d.avatarColor]);
+    const items = [...fresh, ...DMS].map(([who, av, text, id, col]) => `
+      <li class="dm${id ? ' has-video' : ''}" ${id ? `data-id="${esc(id)}"` : ''}>
+        <div class="c-av" style="background:${col || AVATAR_COLORS[Math.floor(r() * AVATAR_COLORS.length)]}">${av}</div>
+        <div><div class="c-user">${esc(who)}</div><div>${esc(text)}</div><div class="c-meta">${1 + Math.floor(r() * 59)}m ago</div></div>
+        ${id ? `<div class="dm-thumb" style="background-image:url(${thumbOf(byId[id] || registry[0])})"></div>` : ''}
+      </li>`).join('');
+    const body = openBrowse('inbox', `<ul class="dms">${items}</ul>`);
+    body.querySelectorAll('.dm.has-video').forEach((li) => li.addEventListener('click', () => {
+      if (byId[li.dataset.id]) { closeSheets(); jumpTo(byId[li.dataset.id]); }
+    }));
+  }
+
   /* ---------- For You / Following ---------- */
   function setFeedMode(mode) {
     if (mode === feedMode) return;
@@ -706,7 +731,7 @@
     $('#tab-following').addEventListener('click', () => setFeedMode('following'));
     $('#tab-foryou').addEventListener('click', () => setFeedMode('foryou'));
     $('#nav-friends').addEventListener('click', () => toast('friends: 3 subagents and a rubber duck'));
-    $('#nav-inbox').addEventListener('click', () => toast('1 new message: "hey claude, you still up?"'));
+    $('#nav-inbox').addEventListener('click', openInbox);
     $('#nav-profile').addEventListener('click', openMe);
 
     document.addEventListener('keydown', (e) => {
