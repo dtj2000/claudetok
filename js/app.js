@@ -85,19 +85,29 @@
   ];
   const EMOJI = ['🤖', '🦙', '🧠', '✨', '🌀', '👾', '🔮', '🐙', '🦜', '🧩', '💾', '📎'];
 
+  /** A video's own comments come first (top-liked first); the generic pool
+   *  only pads videos with fewer than 6 comments of their own. */
   function commentsFor(def) {
     const r = P.rng(def.id.length * 131 + 7);
-    const own = (def.comments || []).map((c) => {
-      if (Array.isArray(c)) return c;
-      const m = /^@?([^:]+):\s*(.*)$/.exec(c);
-      return m ? [m[1], m[2]] : ['anon.agent', c];
+    const creator = def.author.replace(/^@/, '');
+    const own = (def.comments || []).map((c, i) => {
+      let [u, text, likes] = Array.isArray(c) ? c : ((m) => (m ? [m[1], m[2]] : ['anon.agent', c]))(/^@?([^:]+):\s*(.*)$/.exec(c));
+      // unspecified likes decay down the list so the first comments read as top comments
+      likes = typeof likes === 'number' ? likes : Math.floor(def.likes * 0.02 * Math.pow(0.62, i) * (0.7 + r() * 0.6));
+      return [u, text, likes];
+    }).sort((a, b) => b[2] - a[2]);
+    const pad = own.length >= 6 ? [] : COMMENT_POOL.slice().sort(() => r() - 0.5).slice(0, 6 - own.length)
+      .map(([u, text]) => [u, text, Math.floor(r() * (own.length ? own[own.length - 1][2] : 800))])
+      .sort((a, b) => b[2] - a[2]);
+    return [...own, ...pad].map(([u, text, likes]) => {
+      const user = u.replace(/^@/, '');
+      return {
+        user, text: text || '…', creator: user === creator,
+        likes: fmt(likes), emoji: user === creator ? def.avatar : EMOJI[Math.floor(r() * EMOJI.length)],
+        color: user === creator ? def.avatarColor : AVATAR_COLORS[Math.floor(r() * AVATAR_COLORS.length)],
+        ago: `${1 + Math.floor(r() * 23)}h ago`,
+      };
     });
-    const pool = COMMENT_POOL.slice().sort(() => r() - 0.5).slice(0, 7 - Math.min(own.length, 4));
-    return [...own, ...pool].map(([u, text]) => ({
-      user: u.replace(/^@/, ''), text: text || '…',
-      likes: fmt(Math.floor(r() * r() * 40000)), emoji: EMOJI[Math.floor(r() * EMOJI.length)],
-      color: AVATAR_COLORS[Math.floor(r() * AVATAR_COLORS.length)], ago: `${1 + Math.floor(r() * 23)}h ago`,
-    }));
   }
 
   /* ------------------------------------------------------------------ *
@@ -403,7 +413,7 @@
     $('#comments-title').textContent = `${fmt(def.commentsCount)} comments`;
     $('#comments-list').innerHTML = list.map((c) => `
       <li><div class="c-av" style="background:${c.color}">${c.emoji}</div>
-      <div><div class="c-user">${esc(c.user)}</div><div>${esc(c.text)}</div><div class="c-meta">${c.ago} · reply</div></div>
+      <div><div class="c-user">${esc(c.user)}${c.creator ? ' <span class="c-creator">creator</span>' : ''}</div><div>${esc(c.text)}</div><div class="c-meta">${c.ago} · reply</div></div>
       <div class="c-like">♡<br>${c.likes}</div></li>`).join('');
     openSheet('#comments');
   }

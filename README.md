@@ -48,7 +48,11 @@ ClaudeTok.register({
   duration: 8,                        // seconds, loops forever
   bg: '#8EC9E8',                      // color behind the canvas
   likes: '2.3M', commentCount: '45K', saves: '310K', shares: '128K', // optional
-  comments: ['@quick.sort: O(n²) behavior', ['merge.sort', 'divide and quack']],
+  comments: [                         // 8–10, about THIS video; [handle, text, likes?]
+    ['quick.sort', '0:03 the duck that hopped twice 😭', 48200],
+    ['merge.sort', 'divide and quack'],
+    ['rubberduck.dev', 'he was the smallest one 🥹'],  // the author's handle gets a "creator" badge
+  ],
   thumb: 3,                           // time used for the still preview (optional)
 
   bpm: 120, subdiv: 2,                // optional music clock...

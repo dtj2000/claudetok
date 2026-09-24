@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ClaudeTok export</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@500;700&family=Nunito:wght@600;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  /* Renders one loop of a video to PNG frames + a WAV, uploaded to
+   * tools/export_server.py. Usage: export.html?v=<id>&fps=30 */
+  body { margin: 0; background: #111; color: #ddd; font: 14px "JetBrains Mono", monospace; }
+  #status { padding: 10px; }
+  canvas { height: 80vh; display: block; margin: 0 10px; }
+</style>
+</head>
+<body>
+<div id="status">loading…</div>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script src="../js/lib.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const id = q.get('v'), FPS = +(q.get('fps') || 30);
+  const status = (s) => { document.getElementById('status').textContent = s; window.exportStatus = s; };
+  let def = null;
+  window.ClaudeTok = { register: (d) => { def = d; } };
+
+  // static paper grain, same idea as the .grain overlay in the app
+  function makeGrain() {
+    const g = document.createElement('canvas'); g.width = 1080; g.height = 1920;
+    const gx = g.getContext('2d'), img = gx.createImageData(1080, 1920), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = 128 + (Math.random() - 0.5) * 120;
+      d[i] = v; d[i + 1] = v * 0.93; d[i + 2] = v * 0.85; d[i + 3] = 255;
+    }
+    gx.putImageData(img, 0, 0);
+    return g;
+  }
+
+  /** Run the video's timeline once, calling draw + onBeat like the app does. */
+  async function runTimeline(ctx, onFrame) {
+    const dur = def.duration || 8, n = Math.round(dur * FPS), dt = 1 / FPS;
+    const state = def.setup ? def.setup() || {} : {};
+    let prev = -1e-4;
+    for (let i = 0; i < n; i++) {
+      const t = i / FPS;
+      const env = {
+        t, dt, p: t / dur, W: 1080, H: 1920, P, SFX, state, loop: 0, live: true,
+        at: (x) => prev < x && t >= x, between: (a, b) => t >= a && t < b,
+      };
+      await onFrame(t, i, n, env, () => {
+        if (def.bpm && def.onBeat) {
+          const step = 60 / def.bpm / (def.subdiv || 2);
+          for (let k = Math.max(0, Math.floor(prev / step) + 1); k <= Math.floor(t / step); k++) def.onBeat(k, env);
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = def.bg || '#222'; ctx.fillRect(0, 0, 1080, 1920);
+        ctx.save(); def.draw(ctx, t, env); ctx.restore();
+      });
+      prev = t;
+    }
+    return n;
+  }
+
+  /** Offline audio: point SFX at an OfflineAudioContext whose clock follows the timeline. */
+  async function renderAudio(ctx) {
+    const dur = def.duration || 8, rate = 48000;
+    const off = new OfflineAudioContext(2, Math.ceil((dur + 1.5) * rate), rate);
+    let simT = 0;
+    const proxy = new Proxy(off, {
+      get(o, k) {
+        if (k === 'currentTime') return simT;
+        if (k === 'state') return 'running';
+        const v = o[k];
+        return typeof v === 'function' ? v.bind(o) : v;
+      },
+    });
+    const master = off.createGain(); master.gain.value = SFX.volume;
+    const comp = off.createDynamicsCompressor();
+    master.connect(comp); comp.connect(off.destination);
+    Object.assign(SFX, { ctx: proxy, master, muted: false });
+    await runTimeline(ctx, async (t, i, n, env, step) => { simT = t; step(); if (i % 30 === 0) status(`audio pass ${i}/${n}`); });
+    status('rendering audio…');
+    const buf = await off.startRendering();
+    SFX.ctx = null; // silence during the frame pass
+    return wav(buf, Math.round(dur * rate));
+  }
+
+  function wav(buf, frames) {
+    const ch = 2, bytes = frames * ch * 2, dv = new DataView(new ArrayBuffer(44 + bytes));
+    const s = (o, str) => [...str].forEach((c, i) => dv.setUint8(o + i, c.charCodeAt(0)));
+    s(0, 'RIFF'); dv.setUint32(4, 36 + bytes, true); s(8, 'WAVE'); s(12, 'fmt ');
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, ch, true);
+    dv.setUint32(24, buf.sampleRate, true); dv.setUint32(28, buf.sampleRate * ch * 2, true);
+    dv.setUint16(32, ch * 2, true); dv.setUint16(34, 16, true); s(36, 'data'); dv.setUint32(40, bytes, true);
+    const L = buf.getChannelData(0), R = buf.getChannelData(buf.numberOfChannels > 1 ? 1 : 0);
+    let o = 44;
+    for (let i = 0; i < frames; i++) for (const c of [L, R]) {
+      dv.setInt16(o, Math.max(-1, Math.min(1, c[i])) * 0x7fff, true); o += 2;
+    }
+    return new Blob([dv], { type: 'audio/wav' });
+  }
+
+  const upload = (name, blob) => fetch(`/upload?video=${encodeURIComponent(id)}&name=${name}`, { method: 'POST', body: blob })
+    .then((r) => { if (!r.ok) throw new Error('upload failed ' + r.status); });
+
+  async function run() {
+    const c = document.getElementById('c'), ctx = c.getContext('2d');
+    P.scale = 1;
+    await Promise.race([Promise.all(['700 40px Gaegu', '400 40px "Patrick Hand"', '700 40px Fredoka', '700 40px "JetBrains Mono"', '800 40px Nunito'].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 3000))]);
+    const t0 = performance.now();
+    await upload('audio.wav', await renderAudio(ctx));
+    const grain = makeGrain();
+    const pending = [];
+    const n = await runTimeline(ctx, async (t, i, n, env, step) => {
+      step();
+      ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.22; ctx.drawImage(grain, 0, 0); ctx.restore();
+      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+      pending.push(upload(`frame_${String(i).padStart(5, '0')}.png`, blob));
+      if (pending.length >= 6) await pending.shift();
+      if (i % 10 === 0) status(`frames ${i}/${n}`);
+    });
+    await Promise.all(pending);
+    status(`done ${n} frames in ${((performance.now() - t0) / 1000).toFixed(1)}s`);
+  }
+
+  const s = document.createElement('script');
+  s.src = `../videos/${id}.js`;
+  s.onload = () => run().catch((e) => status('ERROR ' + e.message));
+  s.onerror = () => status('ERROR missing video ' + id);
+  document.body.append(s);
+</script>
+</body>
+</html>
