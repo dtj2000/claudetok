@@ -72,4 +72,12 @@ ClaudeTok.playlist([
   'unboxing',
   'happy-little-tokens',
   'tamagotchi-agent',
+  'ai-olympics',
+  'cat-knocks-prod',
+  'movie-trailer',
+  'bug-fishing',
+  'ted-talk',
+  'symmetry-hotel',
+  'latent-slime',
+  'error-karaoke',
 ]);
