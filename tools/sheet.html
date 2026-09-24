@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ClaudeTok contact sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@500;700&family=Nunito:wght@600;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  /* Contact sheet: tools/sheet.html?v=<id>&n=8 renders n evenly spaced frames. */
+  body { margin: 0; background: #111; color: #ddd; font: 13px "JetBrains Mono", monospace; }
+  .grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 6px; padding: 6px; }
+  figure { margin: 0; }
+  canvas { width: 100%; aspect-ratio: 9/16; display: block; border-radius: 6px; }
+  figcaption { padding: 2px 4px; }
+  #err { color: #f88; white-space: pre-wrap; padding: 8px; }
+</style>
+</head>
+<body>
+<div id="err"></div>
+<div class="grid" id="grid"></div>
+<script src="../js/lib.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const id = q.get('v'), n = +(q.get('n') || 8);
+  document.documentElement.style.setProperty('--cols', q.get('cols') || Math.min(n, 4));
+  let def = null;
+  window.ClaudeTok = { register: (d) => { def = d; } };
+  const s = document.createElement('script');
+  s.src = `../videos/${id}.js`;
+  s.onerror = () => { document.getElementById('err').textContent = 'missing ' + id; };
+  s.onload = async () => {
+    await Promise.race([Promise.all(['700 40px Gaegu', '400 40px "Patrick Hand"', '700 40px Fredoka', '700 40px "JetBrains Mono"'].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 2000))]);
+    const dur = def.duration || 8;
+    const times = q.get('t') ? q.get('t').split(',').map(Number) : Array.from({ length: n }, (_, i) => +((i + 0.5) * dur / n).toFixed(2));
+    for (const t of times) {
+      const fig = document.createElement('figure');
+      const c = document.createElement('canvas'); c.width = 360; c.height = 640;
+      fig.append(c); const cap = document.createElement('figcaption'); cap.textContent = `t=${t}`; fig.append(cap);
+      document.getElementById('grid').append(fig);
+      const ctx = c.getContext('2d');
+      const sc = c.width / 1080; P.scale = sc;
+      ctx.fillStyle = def.bg || '#222'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.setTransform(sc, 0, 0, sc, 0, 0);
+      const state = def.setup ? def.setup() || {} : {};
+      // step state-based videos forward so particles etc. are populated
+      const env = (tt, pt) => ({ t: tt, dt: 1 / 30, p: tt / dur, W: 1080, H: 1920, P, SFX, state, loop: 0, live: false, at: () => false, between: (a, b) => tt >= a && tt < b });
+      try {
+        if (def.setup) for (let k = 0; k < t; k += 1 / 30) { ctx.save(); def.draw(ctx, k, env(k)); ctx.restore(); }
+        ctx.save(); def.draw(ctx, t, env(t)); ctx.restore();
+      } catch (e) { cap.textContent += '  ERR ' + e.message; cap.style.color = '#f88'; }
+    }
+  };
+  document.body.append(s);
+</script>
+</body>
+</html>

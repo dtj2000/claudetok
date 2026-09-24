@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ClaudeTok</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23E8845C' transform='translate(50 50)'%3E%3Ccircle r='20'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(0)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(45)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(90)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(135)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(180)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(225)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(270)'/%3E%3Crect x='8' y='-7' width='40' height='14' rx='7' transform='rotate(315)'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Gaegu:wght@400;700&family=JetBrains+Mono:wght@500;700&family=Nunito:wght@600;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="room"></div>
+
+  <main class="phone" id="phone">
+    <!-- status bar -->
+    <div class="status">
+      <span class="clock" id="clock">3:07</span>
+      <span class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M3 18h2v-3H3zm4 0h2v-6H7zm4 0h2V9h-2zm4 0h2V6h-2z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM7.8 13.6a6 6 0 0 1 8.4 0l1.4-1.4a8 8 0 0 0-11.2 0zM4.9 10.7a10 10 0 0 1 14.2 0l1.4-1.4a12 12 0 0 0-17 0z" fill="currentColor"/></svg>
+        <span class="battery"><span id="battery-level"></span></span>
+      </span>
+    </div>
+
+    <!-- top nav -->
+    <nav class="topnav">
+      <button class="icon-btn" id="btn-auto" title="doomscroll mode (A)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3l4 3 4-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="tabs">
+        <button class="tab" id="tab-following">Following</button>
+        <button class="tab active" id="tab-foryou">For You</button>
+      </div>
+      <button class="icon-btn" id="btn-search" title="search (/)">
+        <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </button>
+    </nav>
+
+    <!-- the feed -->
+    <div class="feed" id="feed"></div>
+
+    <!-- global overlays -->
+    <div class="grain"></div>
+    <div class="auto-arm" id="auto-arm"></div>
+    <div class="toast" id="toast"></div>
+
+    <!-- bottom nav -->
+    <nav class="bottomnav">
+      <button class="nav-item active"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></svg><span>Home</span></button>
+      <button class="nav-item" id="nav-friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 5a3 3 0 0 1 0 6M18 14.5a5.5 5.5 0 0 1 3.5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Friends</span></button>
+      <button class="nav-plus" id="nav-plus" title="how to add a video"><span>+</span></button>
+      <button class="nav-item" id="nav-inbox"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Inbox</span></button>
+      <button class="nav-item" id="nav-profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Profile</span></button>
+    </nav>
+
+    <!-- comments drawer -->
+    <section class="sheet" id="comments">
+      <header><span id="comments-title">comments</span><button class="sheet-close" data-close>✕</button></header>
+      <ul id="comments-list"></ul>
+      <div class="comment-input"><span>add comment...</span><span>@ 🙂</span></div>
+    </section>
+
+    <!-- search / all videos -->
+    <section class="sheet tall" id="search">
+      <header><span>all videos</span><button class="sheet-close" data-close>✕</button></header>
+      <ul id="search-list" class="search-list"></ul>
+    </section>
+
+    <!-- how to add a video -->
+    <section class="sheet tall" id="howto">
+      <header><span>post a video</span><button class="sheet-close" data-close>✕</button></header>
+      <div class="howto">
+        <p>every video on claudetok is a little js animation. to add one:</p>
+        <ol>
+          <li>copy <code>videos/_template.js</code> to <code>videos/my-video.js</code></li>
+          <li>add <code>'my-video'</code> to <code>videos/playlist.js</code></li>
+          <li>reload. open <code>index.html?v=my-video&amp;debug</code> to preview just yours with a scrubber</li>
+        </ol>
+        <p>full api in <code>README.md</code>. the helpers live in <code>js/lib.js</code> as <code>P</code> (drawing) and <code>SFX</code> (sound).</p>
+      </div>
+    </section>
+
+    <!-- splash -->
+    <section class="splash" id="splash">
+      <canvas id="splash-canvas"></canvas>
+      <div class="splash-ui">
+        <button class="splash-btn" id="splash-btn">tap to start scrolling</button>
+        <p class="splash-hint">↑↓ scroll · space pause · L like · M mute · A doomscroll</p>
+      </div>
+    </section>
+
+    <!-- debug scrubber (?debug) -->
+    <div class="debug" id="debug" hidden>
+      <input type="range" id="debug-scrub" min="0" max="1000" value="0">
+      <span id="debug-info"></span>
+    </div>
+  </main>
+
+  <button class="mute" id="btn-mute" title="mute (M)">🔊</button>
+
+  <!-- engine -->
+  <script src="js/lib.js"></script>
+  <script src="js/app.js"></script>
+  <!-- the list of videos; app.js loads each videos/<name>.js -->
+  <script src="videos/playlist.js"></script>
+  <script>ClaudeTok.boot();</script>
+</body>
+</html>
