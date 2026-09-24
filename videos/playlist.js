@@ -85,4 +85,7 @@ ClaudeTok.playlist([
   'term-adventure',
   'term-aquarium',
   'term-bbs',
+  'riso-field-guide',
+  'riso-protest',
+  'riso-token-lifecycle',
 ]);
