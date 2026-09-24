@@ -169,6 +169,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: flex; align-items: center; justify-content: space-between; padding: 0 4.5cqw;
   text-shadow: 0 1px 3px rgba(0,0,0,.45);
 }
+.nav-left { display: flex; align-items: center; gap: 2.4cqw; }
+.speed-btn {
+  font: 800 3.2cqw "Nunito", sans-serif; padding: .6cqw 1.8cqw; border-radius: 3cqw;
+  border: .4cqw solid rgba(255,255,255,.8); text-shadow: 0 1px 2px rgba(0,0,0,.4); box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.speed-btn.slow { background: rgba(232,132,92,.85); border-color: transparent; }
 .icon-btn svg { width: 6.6cqw; height: 6.6cqw; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 .icon-btn.on { color: var(--orange); }
 .tabs { display: flex; gap: 5cqw; font-size: 4.3cqw; font-weight: 800; }

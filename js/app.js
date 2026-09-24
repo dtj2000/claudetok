@@ -125,6 +125,8 @@
   const saved = new Set(store.get('saved', []));
   const following = new Set(store.get('following', []));
   let feedMode = 'foryou', bootBatch = true;
+  const SPEEDS = [0.5, 0.65, 0.8, 1];
+  let speed = SPEEDS.includes(store.get('speed', 0.8)) ? store.get('speed', 0.8) : 0.8;
   let recording = null;
 
   /* ---------- "the algorithm": interest per #tag and @author ---------- */
@@ -317,9 +319,9 @@
   /* ---------- main loop ---------- */
   let last = performance.now(), fpsAvg = 60;
   function frame(now) {
-    const dt = Math.min(0.1, (now - last) / 1000);
+    const dt = Math.min(0.1, (now - last) / 1000) * speed; // video time runs at the chosen playback speed
     last = now;
-    fpsAvg = fpsAvg * 0.95 + (dt > 0 ? 1 / dt : 60) * 0.05;
+    fpsAvg = fpsAvg * 0.95 + (dt > 0 ? speed / dt : 60) * 0.05;
     const s = slides[active];
     if (started && s && s.ctx) {
       const def = s.def;
@@ -509,7 +511,8 @@
     if (gifBusy) return toast('already making a gif…');
     gifBusy = true;
     const GW = 360, GH = 640, DELAY = 8;            // 8cs per frame = 12.5 fps
-    const fps = 100 / DELAY, n = Math.round(def.duration * fps), dt = 1 / fps;
+    // match the playback speed the viewer picked
+    const fps = 100 / DELAY, n = Math.round((def.duration * fps) / speed), dt = speed / fps;
     const canvas = document.createElement('canvas');
     canvas.width = GW; canvas.height = GH;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -812,6 +815,16 @@
     $('#btn-mute').textContent = m ? '🔇' : '🔊';
   }
 
+  function setSpeed(v, quiet) {
+    speed = v;
+    store.set('speed', v);
+    const b = $('#btn-speed');
+    b.textContent = `${v}x`;
+    b.classList.toggle('slow', v < 1);
+    if (!quiet) toast(v < 1 ? `playback ${v}x · easier to read 📖` : 'playback 1x · full brainrot speed');
+  }
+  const stepSpeed = (dir) => setSpeed(SPEEDS[Math.max(0, Math.min(SPEEDS.length - 1, SPEEDS.indexOf(speed) + dir))]);
+
   function setAuto(on) {
     autoMode = on;
     $('#btn-auto').classList.toggle('on', on);
@@ -821,6 +834,8 @@
   function wireChrome() {
     $('#btn-mute').addEventListener('click', () => setMuted(!SFX.muted));
     $('#btn-auto').addEventListener('click', () => setAuto(!autoMode));
+    $('#btn-speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]));
+    setSpeed(speed, true);
     $('#btn-search').addEventListener('click', openSearch);
     $('#nav-plus').addEventListener('click', () => openSheet('#howto'));
     $('#tab-following').addEventListener('click', () => setFeedMode('following'));
@@ -852,6 +867,8 @@
         case 'f': case 'F': setFeedMode(feedMode === 'foryou' ? 'following' : 'foryou'); break;
         case 's': case 'S': if (slides[active]) startRecording(slides[active]); break;
         case 'g': case 'G': if (slides[active]) exportGif(slides[active].def); break;
+        case '[': case '-': stepSpeed(-1); break;
+        case ']': case '=': stepSpeed(1); break;
         case 'Escape': closeSheets(); break;
       }
     });

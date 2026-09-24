@@ -25,6 +25,7 @@ server works, and double-clicking `index.html` works in most browsers too.
 | S | save the video (records one loop to .mp4 / .webm) |
 | G | export the video as an animated GIF |
 | / | discover: search + trending hashtags |
+| [ ] | slower / faster playback (0.5x, 0.65x, 0.8x default, 1x) |
 | M | mute |
 | A | doomscroll mode (Clawd's arm scrolls for you) |
 
