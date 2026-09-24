@@ -82,4 +82,7 @@ ClaudeTok.playlist([
   'error-karaoke',
   'letter',
   'sampling',
+  'term-adventure',
+  'term-aquarium',
+  'term-bbs',
 ]);
