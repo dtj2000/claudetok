@@ -64,4 +64,9 @@ ClaudeTok.playlist([
   'mukbang',
   'horoscope',
   'streak-owl',
+  'gpu-heist',
+  'day-1-vs-day-1000',
+  'human-in-the-loop',
+  'defrag-asmr',
+  'spot-the-difference',
 ]);
