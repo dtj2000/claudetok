@@ -88,4 +88,7 @@ ClaudeTok.playlist([
   'riso-field-guide',
   'riso-protest',
   'riso-token-lifecycle',
+  'ink-haiku',
+  'ink-zen-wait',
+  'ink-tortoise-hare',
 ]);
