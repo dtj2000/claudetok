@@ -70,4 +70,6 @@ ClaudeTok.playlist([
   'defrag-asmr',
   'spot-the-difference',
   'unboxing',
+  'happy-little-tokens',
+  'tamagotchi-agent',
 ]);
