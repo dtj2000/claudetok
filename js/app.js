@@ -634,8 +634,14 @@
     return `<div class="grid3">${defs.map((d) => `<button class="tile" data-id="${esc(d.id)}" style="background-image:url(${thumbOf(d)})">
       ${liked.has(d.id) ? '<span class="tile-liked">♥</span>' : ''}<span class="views">▷ ${fmt(views(d))}</span></button>`).join('')}</div>`;
   }
+  /** Tapping a tile plays it, then keeps going through the rest of that grid (wrapping around). */
   function wireGrid(root) {
-    root.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => { closeSheets(); jumpTo(byId[b.dataset.id]); }));
+    root.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => {
+      const ids = [...b.closest('.grid3').querySelectorAll('.tile')].map((t) => t.dataset.id);
+      const i = ids.indexOf(b.dataset.id);
+      closeSheets();
+      jumpToList([...ids.slice(i), ...ids.slice(0, i)].map((id) => byId[id]).filter(Boolean));
+    }));
   }
   function openBrowse(title, html) {
     $('#browse-title').textContent = title;
@@ -765,16 +771,18 @@
     setActive(0);
   }
 
-  /** Insert def right after the current slide and scroll to it. */
-  function jumpTo(def) {
-    const s = makeSlide(def);
+  /** Insert defs right after the current slide (in order) and scroll to the first. */
+  function jumpToList(defs) {
+    if (!defs.length) return;
     const at = active + 1;
-    slides.splice(at, 0, s);
-    feed.insertBefore(s.el, slides[at + 1] ? slides[at + 1].el : null);
-    io.observe(s.el);
+    const ref = slides[at] ? slides[at].el : null;
+    const fresh = defs.map((def) => makeSlide(def));
+    slides.splice(at, 0, ...fresh);
+    fresh.forEach((s) => { feed.insertBefore(s.el, ref); io.observe(s.el); });
     manageCanvases();
     goTo(at);
   }
+  const jumpTo = (def) => jumpToList([def]);
 
   function goTo(i) {
     if (i < 0) return;
