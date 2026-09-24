@@ -80,4 +80,5 @@ ClaudeTok.playlist([
   'symmetry-hotel',
   'latent-slime',
   'error-karaoke',
+  'letter',
 ]);
