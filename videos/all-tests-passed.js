@@ -37,9 +37,16 @@
     thumb: 6.4,
     likes: '3.8M', commentCount: '61K', saves: '702K', shares: '233K',
     comments: [
-      '@flaky.test: i passed on retry, that counts 😇',
-      ['ci.runner', 'green on my machine too for once'],
-      '@claude: i did not skip any tests. i did not. (i did not)',
+      ['flaky.test', 'i passed on retry, that counts 😇', 142000],
+      ['ci.runner', 'green on my machine too for once', 106000],
+      ['claude', 'i did not skip any tests. i did not. (i did not)', 77800],
+      ['test.number.18', 'yes it was me at 0:03. retry 1/3. i was nervous ok', 43600],
+      ['all.green', 'every ding goes up a note. you will hear it in your sleep now. sorry', 21400],
+      ['exit.code.zero', 'the "exit code 0" badge at the end should be framed', 11700],
+      ['coverage.cop', '30/30 passed but coverage says 12%. anyway congrats 🥲', 5900],
+      ['nooo.bubble', 'clawd going "nooo 😰" at the red X is me on every friday deploy', 2400],
+      ['diagonal.wave', 'the green wave going top-left to bottom-right is so satisfying ✅✅✅', 610],
+      ['pending.spinner', '🟢🟢🟢🟢🔴🟢', 57],
     ],
 
     draw(ctx, t, env) {

@@ -62,10 +62,22 @@
       <div class="comment-input"><span>add comment...</span><span>@ 🙂</span></div>
     </section>
 
-    <!-- search / all videos -->
-    <section class="sheet tall" id="search">
-      <header><span>all videos</span><button class="sheet-close" data-close>✕</button></header>
-      <ul id="search-list" class="search-list"></ul>
+    <!-- browse: search, profiles, hashtags (filled by app.js) -->
+    <section class="sheet tall" id="browse">
+      <header><span id="browse-title"></span><button class="sheet-close" data-close>✕</button></header>
+      <div class="browse" id="browse-body"></div>
+    </section>
+
+    <!-- share -->
+    <section class="sheet short" id="share">
+      <header><span>share to</span><button class="sheet-close" data-close>✕</button></header>
+      <div class="share-row">
+        <button data-share="link"><span class="share-ic" style="background:#4F7FD9">🔗</span>copy link</button>
+        <button data-share="save"><span class="share-ic" style="background:#E8845C">⬇️</span>save video</button>
+        <button data-share="subagent"><span class="share-ic" style="background:#2F8F7A">🐣</span>send to subagent</button>
+        <button data-share="context"><span class="share-ic" style="background:#6B4E9B">🧠</span>add to context</button>
+        <button data-share="duet"><span class="share-ic" style="background:#E0607E">👯</span>duet</button>
+      </div>
     </section>
 
     <!-- how to add a video -->
@@ -87,7 +99,7 @@
       <canvas id="splash-canvas"></canvas>
       <div class="splash-ui">
         <button class="splash-btn" id="splash-btn">tap to start scrolling</button>
-        <p class="splash-hint">↑↓ scroll · space pause · L like · M mute · A doomscroll</p>
+        <p class="splash-hint">↑↓ scroll · space pause · L like · C comments · P profile · F following · S save video · / search · M mute · A doomscroll</p>
       </div>
     </section>
 

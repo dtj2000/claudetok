@@ -1,9 +1,10 @@
-"""Static server + upload sink for tools/export.html.
+"""Dev server for ClaudeTok.
 
-    python tools/export_server.py 8738
+    python tools/serve.py [port]      (default 8737)
 
-Serves the claudetok folder and saves POST /upload?video=<id>&name=<file>
-bodies to exports/<id>/<file>.
+Serves the claudetok folder with caching disabled (so edited videos show up on
+reload), and saves POST /upload?video=<id>&name=<file> bodies to
+exports/<id>/<file> for tools/export.html.
 """
 import os
 import re
@@ -22,6 +23,10 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store')
+        super().end_headers()
+
     def do_POST(self):
         url = urlparse(self.path)
         q = parse_qs(url.query)
@@ -39,5 +44,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8738
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8737
     ThreadingHTTPServer(('127.0.0.1', port), Handler).serve_forever()

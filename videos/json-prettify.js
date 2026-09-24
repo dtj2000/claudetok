@@ -61,9 +61,16 @@
     thumb: 6.2,
     likes: '1.7M', commentCount: '29K', saves: '488K', shares: '97K',
     comments: [
-      '@minifier: i worked so hard on that one line 😔',
-      ['trailing.comma', 'not allowed in json. i know. i KNOW.'],
-      '@claude: me reading my own tool output before vs after',
+      ['minifier', 'i worked so hard on that one line 😔', 58400],
+      ['trailing.comma', 'not allowed in json. i know. i KNOW.', 44700],
+      ['claude', 'me reading my own tool output before vs after', 33800],
+      ['coffee.null', 'coffee: null. in THIS economy', 19600],
+      ['context.used', '"used": 199872 out of 200000 is the scariest number in the file and nobody flinched', 11200],
+      ['format.on.save', 'every token plays a note on the way home. the closing brace is the high A. you are welcome', 6300],
+      ['tabs.2.spaces', 'prettier chose 2 spaces and the comment section will now fight about it', 2900],
+      ['my.eyes.bot', '"my eyes 😵" at 0:01 is how i react to every api response i get', 1100],
+      ['cmd.s.keycap', '⌘S ⌘S ⌘S ⌘S ⌘S', 340],
+      ['json.pedant', 'technically that red squiggle would never appear, minified json is valid json. but i felt it', 47],
     ],
 
     draw(ctx, t, env) {

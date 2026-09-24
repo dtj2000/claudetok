@@ -236,10 +236,53 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sheet .c-like { margin-left: auto; color: #a09aa8; font-size: 2.9cqw; text-align: center; flex: none; }
 .comment-input { display: flex; justify-content: space-between; margin: 3cqw 4cqw 4cqw; padding: 3cqw 4cqw; background: #eee7da; border-radius: 6cqw; color: #9a93a3; font-size: 3.5cqw; }
 
-.search-list li { align-items: center; cursor: pointer; border-radius: 2cqw; padding: 2cqw; margin: 0 -2cqw; }
-.search-list li:hover { background: #efe7d8; }
-.search-list .thumb { flex: none; width: 13cqw; height: 23cqw; border-radius: 1.5cqw; background: #ccc center / cover; }
-.search-list .s-cap { font-size: 3.3cqw; color: #555; }
+/* browse sheet: search / profiles / hashtags */
+.sheet.short { height: auto; }
+.browse { overflow-y: auto; flex: 1; padding: 0 3cqw 6cqw; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1cqw; }
+.tile { position: relative; aspect-ratio: 9 / 16; border-radius: 1.2cqw; background: #d8cfbf center / cover; overflow: hidden; }
+.tile:hover { filter: brightness(1.06); }
+.tile .views { position: absolute; left: 1.5cqw; bottom: 1.2cqw; color: #fff; font-weight: 800; font-size: 2.9cqw; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.tile .tile-liked { position: absolute; right: 1.5cqw; top: 1cqw; color: #fe2c55; font-size: 3.6cqw; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.empty { text-align: center; color: #9a93a3; font-size: 3.5cqw; padding: 6cqw 4cqw; }
+.search-input {
+  width: 100%; border: 0; outline: 0; background: #eee7da; border-radius: 6cqw;
+  padding: 3cqw 4.5cqw; font: 700 3.8cqw "Nunito", sans-serif; color: var(--ink); margin-bottom: 3cqw;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 1.6cqw; margin-bottom: 3.5cqw; }
+.chips.center { justify-content: center; margin-top: 2cqw; }
+.chip { background: #efe4d0; color: #7a4a2e; font-weight: 800; font-size: 3.2cqw; padding: 1.2cqw 3cqw; border-radius: 5cqw; }
+.chip:hover { background: #f6d9c7; }
+.profile { display: flex; flex-direction: column; align-items: center; gap: 1.8cqw; padding: 2cqw 0 5cqw; text-align: center; }
+.p-av { width: 24cqw; height: 24cqw; border-radius: 50%; display: grid; place-items: center; font-size: 12cqw; box-shadow: 0 1cqw 3cqw rgba(0,0,0,.18); }
+.p-handle { font-weight: 800; font-size: 4.4cqw; }
+.p-stats { display: flex; gap: 7cqw; font-size: 3.2cqw; color: #8a8494; }
+.p-stats b { display: block; color: var(--ink); font-size: 4.4cqw; }
+.p-follow { background: #fe2c55; color: #fff; font-weight: 800; font-size: 3.8cqw; padding: 2.2cqw 12cqw; border-radius: 1.5cqw; margin-top: 1cqw; }
+.p-follow.on { background: #e6ded0; color: var(--ink); }
+.p-bio { font-size: 3.5cqw; color: #5d5566; max-width: 80%; }
+.tag-head { display: flex; gap: 4cqw; align-items: center; padding: 1cqw 1cqw 5cqw; }
+.t-ic { width: 20cqw; height: 20cqw; border-radius: 3cqw; background: #efe4d0; display: grid; place-items: center; font: 800 11cqw "Fredoka", sans-serif; color: #c96a45; }
+.t-name { font-weight: 800; font-size: 5.4cqw; }
+.t-meta { color: #8a8494; font-size: 3.3cqw; margin-top: 1cqw; }
+.sec { font-size: 3.8cqw; margin: 5cqw 1cqw 2.5cqw; }
+
+/* share sheet */
+.share-row { display: flex; gap: 3cqw; padding: 1cqw 4cqw 7cqw; overflow-x: auto; }
+.share-row button { display: flex; flex-direction: column; align-items: center; gap: 1.6cqw; font-size: 2.9cqw; font-weight: 700; color: #5d5566; flex: none; width: 16cqw; }
+.share-ic { width: 13cqw; height: 13cqw; border-radius: 50%; display: grid; place-items: center; font-size: 6cqw; }
+
+/* recording badge */
+.slide.recording::before {
+  content: "● REC"; position: absolute; left: 4cqw; top: 22cqw; z-index: 3;
+  background: #fe2c55; color: #fff; font: 800 3.2cqw "Nunito", sans-serif; padding: .8cqw 2.4cqw; border-radius: 1.5cqw;
+  animation: recblink 1s steps(2) infinite;
+}
+@keyframes recblink { 50% { opacity: .55; } }
+
+/* clickable caption bits */
+.info .author, .info .caption .tag { cursor: pointer; }
+.info .author:hover, .info .caption .tag:hover { text-decoration: underline; }
 
 .howto { padding: 0 6cqw 6cqw; font-size: 3.8cqw; line-height: 1.5; overflow-y: auto; }
 .howto code { font-family: "JetBrains Mono", monospace; font-size: .85em; background: #eee4d2; padding: .1em .35em; border-radius: .3em; }

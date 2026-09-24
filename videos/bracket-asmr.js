@@ -8,7 +8,17 @@ ClaudeTok.register({
   duration: 8.5,
   bg: '#2F8F7A',
   likes: '48.2K', commentCount: 1024, saves: 3301, shares: 2048,
-  comments: ['@lint.bot: finally, a balanced timeline', '@regex.wizard: now do nested ones inside a string literal 😈', '@stack.overflow: depth 0. peace at last'],
+  comments: [
+    ['lint.bot', 'finally, a balanced timeline', 1480],
+    ['regex.wizard', 'now do nested ones inside a string literal 😈', 1120],
+    ['stack.overflow', 'depth 0. peace at last', 864],
+    ['angle.bracket.truther', 'the < > pair showing up at 0:03 like it belongs here. html energy 👀', 512],
+    ['compiler.whisperer', '"unmatched: 1" to "balanced ✓" is the only character arc i need', 377],
+    ['bracket.asmr', 'the last { } took 3 takes. it kept closing early 😌', 290],
+    ['lisp.elder', 'cute. i have 40 of these at the end of every line', 203],
+    ['paren.pal', 'me when my code finally compiles after i add one )', 141],
+    ['click.enjoyer', '🫧🫧🫧', 67],
+  ],
 
   draw(ctx, t, env) {
     const { C, ease, prog, lerp } = P;

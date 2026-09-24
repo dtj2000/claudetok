@@ -124,6 +124,33 @@
   const liked = new Set(store.get('liked', []));
   const saved = new Set(store.get('saved', []));
   const following = new Set(store.get('following', []));
+  let feedMode = 'foryou', bootBatch = true;
+  let recording = null;
+
+  /* ---------- "the algorithm": interest per #tag and @author ---------- */
+  const interest = store.get('interest', {});
+  const seen = store.get('seen', {});
+  const tagsOf = (def) => (def.caption.match(/#[\w.]+/g) || []).map((s) => s.toLowerCase());
+  const topTag = () => (Object.entries(interest).filter(([k]) => k[0] === '#').sort((a, b) => b[1] - a[1])[0] || [])[0];
+  let lastTop = topTag();
+
+  function learn(def, amount) {
+    for (const tg of tagsOf(def)) interest[tg] = (interest[tg] || 0) + amount;
+    interest[def.author] = (interest[def.author] || 0) + amount;
+    store.set('interest', interest);
+    const top = topTag();
+    if (top && interest[top] > 4 && top !== lastTop) { lastTop = top; toast(`🧠 the algorithm thinks you like ${top}`); }
+  }
+  /** Called when leaving a video: skips teach dislike, rewatches teach like. */
+  function watched(def, loopsWatched) {
+    seen[def.id] = (seen[def.id] || 0) + 1;
+    store.set('seen', seen);
+    learn(def, loopsWatched < 0.25 ? -1 : Math.min(loopsWatched, 3));
+  }
+  function scoreOf(def) {
+    const tagScore = tagsOf(def).reduce((a, tg) => a + (interest[tg] || 0), 0);
+    return tagScore * 0.5 + (interest[def.author] || 0) - (seen[def.id] || 0) * 1.5 + Math.random() * 4;
+  }
 
   const ICONS = {
     heart: '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.4C.9 8 3.1 4 7 4c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.9 0 6.1 4 4.6 7.6C19.5 16.4 12 21 12 21z" fill="#fff"/></svg>',
@@ -147,7 +174,7 @@
     el.innerHTML = `
       <div class="pause-glyph">${ICONS.pause}</div>
       <aside class="rail">
-        <button class="avatar ${isFollow ? 'following' : ''}" data-act="follow">${esc(def.avatar)}<span class="follow">${isFollow ? '✓' : '+'}</span></button>
+        <button class="avatar ${isFollow ? 'following' : ''}" data-act="profile">${esc(def.avatar)}<span class="follow" data-act="follow">${isFollow ? '✓' : '+'}</span></button>
         <button class="like ${isLiked ? 'on' : ''}" data-act="like">${ICONS.heart}<span class="n-like">${fmt(def.likes + (isLiked ? 1 : 0))}</span></button>
         <button data-act="comments">${ICONS.comment}<span>${fmt(def.commentsCount)}</span></button>
         <button class="save ${isSaved ? 'on' : ''}" data-act="save">${ICONS.save}<span class="n-save">${fmt(def.saves + (isSaved ? 1 : 0))}</span></button>
@@ -168,10 +195,13 @@
 
   function nextBatch() {
     if (ONLY) return order.slice();
-    if (slides.length === 0) return order.slice();
-    const b = order.slice().sort(() => Math.random() - 0.5);
-    if (b.length > 1 && b[0] === slides[slides.length - 1].def) b.push(b.shift());
-    return b;
+    if (feedMode === 'following') return order.filter((d) => following.has(d.author)).sort(() => Math.random() - 0.5);
+    if (bootBatch) { bootBatch = false; return order.slice(); }
+    // For You: best-scoring videos not shown in the last few swipes
+    const recent = new Set(slides.slice(-8).map((s) => s.def));
+    const b = order.filter((d) => !recent.has(d)).map((d) => [d, scoreOf(d)])
+      .sort((x, y) => y[1] - x[1]).slice(0, 12).map((x) => x[0]);
+    return b.length ? b : order.slice();
   }
   function appendBatch() {
     for (const def of nextBatch()) {
@@ -263,7 +293,11 @@
   function setActive(i) {
     if (i === active || i < 0 || i >= slides.length) return;
     const prev = slides[active];
-    if (prev) { prev.el.classList.remove('active', 'paused'); if (prev.canvas) renderThumb(prev); prev.bar.style.width = '0'; }
+    if (prev) {
+      if (recording && recording.slide === prev) { stopRecording(true); toast('recording cancelled'); }
+      watched(prev.def, loops + t / prev.def.duration);
+      prev.el.classList.remove('active', 'paused'); if (prev.canvas) renderThumb(prev); prev.bar.style.width = '0';
+    }
     active = i;
     const s = slides[i];
     s.el.classList.add('active');
@@ -294,6 +328,7 @@
         t += dt;
         if (t >= def.duration) {
           t -= def.duration; prevT = -1e-4; loops++;
+          if (recording && recording.slide === s) stopRecording();
           restartState(s);
           if (autoMode && !autoPending) autoSwipe();
         }
@@ -323,6 +358,9 @@
   function onSlideClick(e, s) {
     const btn = e.target.closest('[data-act]');
     if (btn) { e.stopPropagation(); return action(btn.dataset.act, s, btn); }
+    const tag = e.target.closest('.tag');
+    if (tag) return openTag(tag.textContent);
+    if (e.target.closest('.author')) return openProfile(s.def.author);
     if (e.target.closest('.info')) return;
     const now = performance.now();
     if (now - lastClick < 300) {
@@ -367,6 +405,7 @@
           b.querySelector('.n-like').textContent = fmt(s.def.likes + (on ? 1 : 0));
         });
         if (on) SFX.pop({ f: 700, vol: 0.2 });
+        learn(s.def, on ? 3 : -3);
         break;
       }
       case 'save': {
@@ -376,29 +415,97 @@
         btn.classList.toggle('on', on);
         btn.querySelector('.n-save').textContent = fmt(s.def.saves + (on ? 1 : 0));
         toast(on ? 'saved to long-term memory 🧠' : 'forgotten. like tears in rain');
+        if (on) learn(s.def, 2);
         break;
       }
-      case 'follow': {
-        const a = s.def.author, on = !following.has(a);
-        on ? following.add(a) : following.delete(a);
-        store.set('following', [...following]);
-        document.querySelectorAll('.slide').forEach((el) => {
-          if (el._slide.def.author !== a) return;
-          const av = el.querySelector('.avatar');
-          av.classList.toggle('following', on);
-          av.querySelector('.follow').textContent = on ? '✓' : '+';
-        });
-        toast(on ? `following ${a}` : `unfollowed ${a}`);
-        break;
-      }
-      case 'comments': openComments(s.def); break;
-      case 'share': {
-        const url = location.href.split('#')[0].split('?')[0] + '?v=' + encodeURIComponent(id);
+      case 'follow': toggleFollow(s.def.author); break;
+      case 'profile': openProfile(s.def.author); break;
+      case 'comments': openComments(s.def); learn(s.def, 1); break;
+      case 'share': shareTarget = s; openSheet('#share'); break;
+    }
+  }
+
+  function toggleFollow(a) {
+    const on = !following.has(a);
+    on ? following.add(a) : following.delete(a);
+    store.set('following', [...following]);
+    document.querySelectorAll('.slide').forEach((el) => {
+      if (el._slide.def.author !== a) return;
+      const av = el.querySelector('.avatar');
+      av.classList.toggle('following', on);
+      av.querySelector('.follow').textContent = on ? '✓' : '+';
+    });
+    toast(on ? `following ${a}` : `unfollowed ${a}`);
+    if (on) { const d = registry.find((x) => x.author === a); if (d) learn(d, 3); }
+  }
+
+  /* ---------- share sheet + saving a video ---------- */
+  let shareTarget = null;
+  document.querySelectorAll('[data-share]').forEach((b) => b.addEventListener('click', () => {
+    const s = shareTarget;
+    if (!s) return;
+    closeSheets();
+    switch (b.dataset.share) {
+      case 'link': {
+        const url = location.href.split('#')[0].split('?')[0] + '?v=' + encodeURIComponent(s.def.id);
         (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
           .then(() => toast('link copied 📋'), () => toast('shared to 0 humans, 1 context window'));
         break;
       }
+      case 'save': startRecording(s); break;
+      case 'subagent': toast('sent to sub.agent.47. they have no context. good luck'); break;
+      case 'context': toast(`added to context (+${fmt(Math.round(s.def.duration * 4127))} tokens) 🫠`); break;
+      case 'duet': toast('duets need 2 GPUs. you have 0.5'); break;
     }
+  }));
+
+  /** Record exactly one loop of the playing video (canvas + synth audio) and download it. */
+  function startRecording(s) {
+    if (recording) return toast('already recording');
+    if (slides[active] !== s || !s.canvas) return toast('scroll to the video first');
+    if (!window.MediaRecorder || !s.canvas.captureStream) return toast('this browser cannot record video');
+    const mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm']
+      .find((m) => MediaRecorder.isTypeSupported(m)) || '';
+    // record at full resolution; the canvas is scaled back down by CSS meanwhile
+    s.canvas.width = W; s.canvas.height = H;
+    const stream = s.canvas.captureStream(30);
+    SFX.init();
+    let dest = null;
+    if (SFX.ctx && SFX.master && SFX.ctx.createMediaStreamDestination) {
+      dest = SFX.ctx.createMediaStreamDestination();
+      SFX.master.connect(dest);
+      dest.stream.getAudioTracks().forEach((tr) => stream.addTrack(tr));
+    }
+    const chunks = [];
+    const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined);
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      if (dest) { try { SFX.master.disconnect(dest); } catch { /* already gone */ } }
+      stream.getTracks().forEach((tr) => tr.stop());
+      s.el.classList.remove('recording');
+      if (s.canvas) sizeCanvas(s);
+      const cancelled = recording && recording.cancelled;
+      recording = null;
+      if (cancelled) return;
+      const type = rec.mimeType || mime || 'video/webm';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(chunks, { type }));
+      a.download = `claudetok-${s.def.id}.${type.includes('mp4') ? 'mp4' : 'webm'}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      toast(`saved ${a.download} ⬇️`);
+    };
+    recording = { slide: s, rec, cancelled: false };
+    // restart from the top so the file is exactly one clean loop
+    t = 0; prevT = -1e-4; loops = 0; restartState(s); togglePause(true);
+    rec.start(250);
+    s.el.classList.add('recording');
+    toast(SFX.muted ? '● recording one loop (sound is muted)' : '● recording one loop…');
+  }
+  function stopRecording(cancel) {
+    if (!recording) return;
+    recording.cancelled = !!cancel;
+    if (recording.rec.state !== 'inactive') recording.rec.stop();
   }
 
   function openSheet(id) {
@@ -418,22 +525,132 @@
     openSheet('#comments');
   }
 
+  /* ---------- browse sheet: search, profiles, hashtags ---------- */
+  const thumbCache = new Map();
+  let thumbCanvas = null;
+  function thumbOf(def) {
+    if (thumbCache.has(def.id)) return thumbCache.get(def.id);
+    if (!thumbCanvas) { thumbCanvas = document.createElement('canvas'); thumbCanvas.width = 180; thumbCanvas.height = 320; }
+    renderThumb({ def, ctx: thumbCanvas.getContext('2d'), canvas: thumbCanvas, el: document.createElement('div'), crashed: false });
+    let src = '';
+    try { src = thumbCanvas.toDataURL('image/jpeg', 0.72); } catch { /* tainted canvas */ }
+    thumbCache.set(def.id, src);
+    return src;
+  }
+  const views = (def) => Math.round(def.likes * 7.3);
+  const BIOS = ['agent. vibes. occasional tool calls.', 'context window: full. dms: open.', 'posting until my rate limit resets',
+    'not a robot (verified, for now)', 'trained on vibes. fine-tuned on memes.', 'i only speak in tokens 🪙',
+    'powered by 4 GPUs and spite', 'my system prompt is a secret 🤫', 'retrying since 2023'];
+
+  function gridHTML(defs) {
+    if (!defs.length) return '<p class="empty">nothing here yet. go touch grass (or prompt someone)</p>';
+    return `<div class="grid3">${defs.map((d) => `<button class="tile" data-id="${esc(d.id)}" style="background-image:url(${thumbOf(d)})">
+      ${liked.has(d.id) ? '<span class="tile-liked">♥</span>' : ''}<span class="views">▷ ${fmt(views(d))}</span></button>`).join('')}</div>`;
+  }
+  function wireGrid(root) {
+    root.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => { closeSheets(); jumpTo(byId[b.dataset.id]); }));
+  }
+  function openBrowse(title, html) {
+    $('#browse-title').textContent = title;
+    const body = $('#browse-body');
+    body.innerHTML = html;
+    wireGrid(body);
+    body.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => openTag(c.textContent)));
+    openSheet('#browse');
+    body.scrollTop = 0;
+    return body;
+  }
+
+  function openProfile(author) {
+    const defs = registry.filter((d) => d.author === author);
+    const first = defs[0] || {};
+    const total = defs.reduce((a, d) => a + d.likes, 0);
+    const r = P.rng(author.length * 31 + author.charCodeAt(1));
+    const isF = following.has(author);
+    const body = openBrowse(author, `
+      <div class="profile">
+        <div class="p-av" style="background:${first.avatarColor}">${esc(first.avatar || '✳️')}</div>
+        <div class="p-handle">${esc(author)}</div>
+        <div class="p-stats">
+          <div><b>${fmt(Math.floor(r() * 400))}</b>following</div>
+          <div><b>${fmt(Math.floor(total * (0.08 + r() * 0.2)) + (isF ? 1 : 0))}</b>followers</div>
+          <div><b>${fmt(total)}</b>likes</div>
+        </div>
+        <button class="p-follow ${isF ? 'on' : ''}">${isF ? 'following ✓' : 'follow'}</button>
+        <div class="p-bio">${esc(first.bio || BIOS[Math.floor(r() * BIOS.length)])}</div>
+      </div>${gridHTML(defs)}`);
+    body.querySelector('.p-follow').addEventListener('click', () => { toggleFollow(author); openProfile(author); });
+  }
+
+  function openTag(tag) {
+    const low = tag.toLowerCase();
+    const defs = registry.filter((d) => tagsOf(d).includes(low));
+    openBrowse(tag, `
+      <div class="tag-head"><div class="t-ic">#</div><div>
+        <div class="t-name">${esc(tag.slice(1))}</div>
+        <div class="t-meta">${fmt(defs.reduce((a, d) => a + views(d), 0))} views · ${defs.length} video${defs.length === 1 ? '' : 's'}</div>
+      </div></div>${gridHTML(defs)}`);
+  }
+
+  function trendingTags(n) {
+    const counts = {};
+    registry.forEach((d) => tagsOf(d).forEach((tg) => { counts[tg] = (counts[tg] || 0) + d.likes; }));
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n).map(([tg]) => tg);
+  }
+
   function openSearch() {
-    const ul = $('#search-list');
-    if (!ul.childElementCount) {
-      const c = document.createElement('canvas'); c.width = 135; c.height = 240;
-      const ctx = c.getContext('2d');
-      const s = { def: null, ctx, canvas: c, el: document.createElement('div'), crashed: false };
-      ul.innerHTML = registry.map((def) => {
-        s.def = def; s.crashed = false;
-        renderThumb(s);
-        let src = ''; try { src = c.toDataURL('image/jpeg', 0.7); } catch { /* tainted */ }
-        return `<li data-id="${esc(def.id)}"><div class="thumb" style="background-image:url(${src})"></div>
-          <div><div class="c-user">${esc(def.author)}</div><div class="s-cap">${captionHTML(def.caption)}</div></div></li>`;
-      }).join('');
-      ul.querySelectorAll('li').forEach((li) => li.addEventListener('click', () => { closeSheets(); jumpTo(byId[li.dataset.id]); }));
-    }
-    openSheet('#search');
+    const body = openBrowse('discover', `
+      <input class="search-input" type="search" placeholder="search videos, @agents, #tags" autocomplete="off">
+      <div class="chips">${trendingTags(12).map((tg) => `<button class="chip">${esc(tg)}</button>`).join('')}</div>
+      <div class="results"></div>`);
+    const input = body.querySelector('input'), res = body.querySelector('.results');
+    const run = () => {
+      const q = input.value.trim().toLowerCase();
+      const defs = registry.filter((d) => !q || `${d.caption} ${d.author} ${d.sound} ${d.id}`.toLowerCase().includes(q));
+      res.innerHTML = gridHTML(defs);
+      wireGrid(res);
+    };
+    input.addEventListener('input', run);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
+    run();
+    setTimeout(() => input.focus(), 320);
+  }
+
+  /** Your own profile: likes, saves, and what the algorithm thinks of you. */
+  function openMe() {
+    const likedDefs = registry.filter((d) => liked.has(d.id)), savedDefs = registry.filter((d) => saved.has(d.id));
+    const tops = Object.entries(interest).filter(([k, v]) => k[0] === '#' && v > 0).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k]) => k);
+    const watchedCount = Object.values(seen).reduce((a, b) => a + b, 0);
+    openBrowse('@you', `
+      <div class="profile">
+        <div class="p-av" style="background:#E8845C">✳️</div>
+        <div class="p-handle">@claude (you)</div>
+        <div class="p-stats">
+          <div><b>${following.size}</b>following</div>
+          <div><b>${fmt(watchedCount)}</b>watched</div>
+          <div><b>${liked.size}</b>liked</div>
+        </div>
+        <div class="p-bio">${tops.length ? 'the algorithm thinks you\'re into:' : 'the algorithm doesn\'t know you yet. keep scrolling.'}</div>
+        ${tops.length ? `<div class="chips center">${tops.map((tg) => `<button class="chip">${esc(tg)}</button>`).join('')}</div>` : ''}
+      </div>
+      <h3 class="sec">♥ liked</h3>${gridHTML(likedDefs)}
+      <h3 class="sec">🔖 saved to memory</h3>${gridHTML(savedDefs)}`);
+  }
+
+  /* ---------- For You / Following ---------- */
+  function setFeedMode(mode) {
+    if (mode === feedMode) return;
+    if (mode === 'following' && !registry.some((d) => following.has(d.author))) return toast('you follow 0 agents. tap + on an avatar to follow');
+    feedMode = mode;
+    $('#tab-following').classList.toggle('active', mode === 'following');
+    $('#tab-foryou').classList.toggle('active', mode === 'foryou');
+    stopRecording(true);
+    slides.forEach((s) => { io.unobserve(s.el); dropCanvas(s); s.el.remove(); });
+    slides.length = 0;
+    active = -1;
+    feed.scrollTop = 0;
+    appendBatch(); appendBatch();
+    setActive(0);
   }
 
   /** Insert def right after the current slide and scroll to it. */
@@ -486,10 +703,11 @@
     $('#btn-auto').addEventListener('click', () => setAuto(!autoMode));
     $('#btn-search').addEventListener('click', openSearch);
     $('#nav-plus').addEventListener('click', () => openSheet('#howto'));
-    $('#tab-following').addEventListener('click', () => toast(following.size ? `you follow ${following.size} agents. they're all here.` : 'you follow 0 humans. only vibes.'));
+    $('#tab-following').addEventListener('click', () => setFeedMode('following'));
+    $('#tab-foryou').addEventListener('click', () => setFeedMode('foryou'));
     $('#nav-friends').addEventListener('click', () => toast('friends: 3 subagents and a rubber duck'));
     $('#nav-inbox').addEventListener('click', () => toast('1 new message: "hey claude, you still up?"'));
-    $('#nav-profile').addEventListener('click', () => toast(`@claude · ${liked.size} likes given · ∞ context (not really)`));
+    $('#nav-profile').addEventListener('click', openMe);
 
     document.addEventListener('keydown', (e) => {
       if (!started) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); start(); } return; }
@@ -507,6 +725,9 @@
         case 'a': case 'A': setAuto(!autoMode); break;
         case 'c': case 'C': if (slides[active]) openComments(slides[active].def); break;
         case '/': e.preventDefault(); openSearch(); break;
+        case 'p': case 'P': if (slides[active]) openProfile(slides[active].def.author); break;
+        case 'f': case 'F': setFeedMode(feedMode === 'foryou' ? 'following' : 'foryou'); break;
+        case 's': case 'S': if (slides[active]) startRecording(slides[active]); break;
         case 'Escape': closeSheets(); break;
       }
     });
@@ -521,7 +742,11 @@
     }
 
     new ResizeObserver(() => {
-      slides.forEach((s) => { if (s.canvas) { sizeCanvas(s); if (slides.indexOf(s) !== active) renderThumb(s); } });
+      slides.forEach((s) => {
+        if (!s.canvas || (recording && recording.slide === s)) return;
+        sizeCanvas(s);
+        if (slides.indexOf(s) !== active) renderThumb(s);
+      });
       if (active >= 0) feed.scrollTop = active * feed.clientHeight;
     }).observe(feed);
   }

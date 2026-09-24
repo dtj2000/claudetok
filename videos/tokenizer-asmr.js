@@ -133,9 +133,16 @@
     thumb: 1.9,
     likes: '5.1M', commentCount: '88K', saves: '1.2M', shares: '402K',
     comments: [
-      '@bpe.merges: "idis" is carrying this whole word',
-      ['strawberry', 'there are 3 r\'s. i will not be taking questions'],
-      '@context.window: that last one cost me 6 tokens and my peace',
+      ['strawberry', 'there are 3 r\'s. i will not be taking questions', 188000],
+      ['bpe.merges', '"idis" is carrying this whole word', 141000],
+      ['context.window', 'that last one cost me 6 tokens and my peace', 97200],
+      ['token.cutter', 'the knife is sharpened on a vocabulary of 100k. every cut is lossless 🔪', 52600],
+      ['unbelievably', 'me getting cut into "un" "belie" "vably" at 0:01 and hearing "crunchy 🤤". i was a whole word once', 29800],
+      ['id.48059', 'finally some representation for token 48059 🥲', 14700],
+      ['nitpick.bpe', 'real tokenizers would never split it like that, there is a leading space. anyway i watched this 30 times', 6100],
+      ['antidis.fan', '"for ONE word" is my reaction to every german compound noun', 2600],
+      ['crumb.collector', 'the crumbs are the whitespace tokens. i will not elaborate', 730],
+      ['asmr.agent', '🤤🔪🤤', 88],
     ],
 
     draw(ctx, t, env) {

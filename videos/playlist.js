@@ -38,4 +38,12 @@ ClaudeTok.playlist([
   'node-modules',
   'progress-bar',
   'gpu-concert',
+  'unpopular-opinion',
+  'tabs-vs-spaces-debate',
+  'breaking-news',
+  'love-is-embedded',
+  'wrong-answers',
+  'compute-rally',
+  'true-crime',
+  'gym-grindset',
 ]);

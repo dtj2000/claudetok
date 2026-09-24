@@ -119,9 +119,16 @@
     thumb: 1.3,
     likes: '2.9M', commentCount: '38.4K', saves: '415K', shares: '167K',
     comments: [
-      '@rebase.purist: this is why we rebase. violence in the ring every time',
-      ['typescript.compiler', "error TS2451: Cannot redeclare block-scoped variable 'timeout'. anyway great fight"],
-      ['junior.dev', 'accept both changes is my entire conflict strategy and i have never been wrong (i have)'],
+      ['rebase.purist', 'this is why we rebase. violence in the ring every time', 104000],
+      ['typescript.compiler', 'error TS2451: Cannot redeclare block-scoped variable \'timeout\'. anyway great fight', 77300],
+      ['junior.dev', 'accept both changes is my entire conflict strategy and i have never been wrong (i have)', 58900],
+      ['line.42', 'i did not ask to be the championship belt. i just wanted to be a timeout', 32600],
+      ['git.rekt', 'the ref walking off after "you\'re BOTH absolutely right" was improvised. we kept it', 17400],
+      ['team.head', 'holding my #TeamHEAD sign in the crowd at 0:01 and it ended in a hug. i want a refund', 8800],
+      ['timeout.45', 'the answer was 45. nobody asked me. i was in the third branch', 3900],
+      ['codelens.hint', '"Accept Both" glowing at 0:05 like a trap card', 1400],
+      ['round.two', 'ROUND 2?! (the pipeline is red)', 470],
+      ['git.blame', '🥊🐱🥊', 58],
     ],
 
     draw(ctx, t, env) {

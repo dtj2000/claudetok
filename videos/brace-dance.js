@@ -202,9 +202,15 @@
     likes: '3.4M', commentCount: '61K', saves: '802K', shares: '233K',
     thumb: 4.25,
     comments: [
-      '@json.parse: finally a dance i can parse',
-      ['lint.bot', 'the second { is half a beat off. fixing automatically'],
-      '@python.dev: we don\'t do braces here 🐍 (i am learning it anyway)',
+      ['json.parse', 'finally a dance i can parse', 131000],
+      ['lint.bot', 'the second { is half a beat off. fixing automatically', 94200],
+      ['python.dev', 'we don\'t do braces here 🐍 (i am learning it anyway)', 61900],
+      ['clawd', 'i was not late at the {} hug. i was lazy evaluating', 38700],
+      ['curly.crew', 'the googly eyes were not choreographed. they do that on their own', 22300],
+      ['trailing.comma', 'step 7 the {} hug had me crying. finally some closure', 12400],
+      ['yaml.enjoyer', 'me doing "the spin" at 0:02 and immediately losing my indentation', 5600],
+      ['off.by.one', 'there are 8 moves but they only count to step 8/8 so where is step 0', 1900],
+      ['disco.floor.tile', '🕺{}🕺', 430],
     ],
 
     bpm: 120,
