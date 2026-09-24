@@ -81,4 +81,5 @@ ClaudeTok.playlist([
   'latent-slime',
   'error-karaoke',
   'letter',
+  'sampling',
 ]);
