@@ -822,7 +822,10 @@
     $('#nav-profile').addEventListener('click', openMe);
 
     document.addEventListener('keydown', (e) => {
-      if (!started) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); start(); } return; }
+      if (!started) {
+        if ([' ', 'Enter', 'ArrowDown', 'ArrowUp', 'PageDown', 'j'].includes(e.key)) { e.preventDefault(); requestStart(); }
+        return;
+      }
       if (e.target.closest && e.target.closest('input')) return;
       switch (e.key) {
         case 'ArrowDown': case 'j': case 'PageDown': e.preventDefault(); goTo(active + 1); break;
@@ -920,8 +923,17 @@
     splashRAF = requestAnimationFrame(loop);
   }
 
-  function start() {
+  /** Any tap/scroll/key on the splash. Works before boot finishes: we remember it. */
+  let ready = false, wantStart = false;
+  function requestStart() {
     if (started) return;
+    SFX.init(); // unlock audio inside the user gesture, even if we start a moment later
+    if (!ready) { wantStart = true; $('#splash-btn').textContent = 'loading… starting in a sec'; return; }
+    start();
+  }
+
+  function start() {
+    if (started || !ready) return;
     started = true;
     SFX.init();
     SFX.pop();
@@ -936,14 +948,20 @@
   /* ------------------------------------------------------------------ *
    *  Boot
    * ------------------------------------------------------------------ */
+  let loadedCount = 0;
   function loadScript(name) {
     return new Promise((res) => {
       const s = document.createElement('script');
       s.src = `videos/${name}.js`;
       s.async = false;
       s.dataset.file = name;
-      s.onload = () => res(true);
-      s.onerror = () => { console.warn(`[claudetok] could not load videos/${name}.js — is it in the folder?`); res(false); };
+      const done = (ok) => {
+        loadedCount++;
+        if (!wantStart) $('#splash-btn').textContent = `loading videos ${loadedCount}/${playlistNames.length}…`;
+        res(ok);
+      };
+      s.onload = () => done(true);
+      s.onerror = () => { console.warn(`[claudetok] could not load videos/${name}.js — is it in the folder?`); done(false); };
       document.body.appendChild(s);
     });
   }
@@ -954,6 +972,12 @@
     wireChrome();
     startClock();
     drawSplash();
+    // the splash listens right away: tap, scroll, or swipe all start the feed
+    const splash = $('#splash');
+    splash.addEventListener('click', requestStart);
+    splash.addEventListener('wheel', requestStart, { passive: true });
+    splash.addEventListener('touchend', requestStart);
+    $('#splash-btn').textContent = 'loading…';
 
     const fonts = ['700 40px Gaegu', '400 40px "Patrick Hand"', '700 40px Fredoka', '700 40px "JetBrains Mono"', '800 40px Nunito'];
     await Promise.race([
@@ -977,9 +1001,10 @@
     appendBatch();
     ensureCanvas(slides[0]);
     renderThumb(slides[0]);
-    $('#splash-btn').addEventListener('click', start);
-    $('#splash').addEventListener('click', start);
     requestAnimationFrame(frame);
+    ready = true;
+    $('#splash-btn').textContent = 'tap to start scrolling';
+    if (wantStart) start();
   }
 
   window.ClaudeTok = {
