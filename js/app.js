@@ -453,6 +453,7 @@
         break;
       }
       case 'save': startRecording(s); break;
+      case 'gif': exportGif(s.def); break;
       case 'subagent': toast('sent to sub.agent.47. they have no context. good luck'); break;
       case 'context': toast(`added to context (+${fmt(Math.round(s.def.duration * 4127))} tokens) 🫠`); break;
       case 'duet': toast('duets need 2 GPUs. you have 0.5'); break;
@@ -502,6 +503,56 @@
     s.el.classList.add('recording');
     toast(SFX.muted ? '● recording one loop (sound is muted)' : '● recording one loop…');
   }
+  /** Render one loop offscreen (silently) and download it as an animated GIF. */
+  let gifBusy = false;
+  async function exportGif(def) {
+    if (gifBusy) return toast('already making a gif…');
+    gifBusy = true;
+    const GW = 360, GH = 640, DELAY = 8;            // 8cs per frame = 12.5 fps
+    const fps = 100 / DELAY, n = Math.round(def.duration * fps), dt = 1 / fps;
+    const canvas = document.createElement('canvas');
+    canvas.width = GW; canvas.height = GH;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const s = { def, ctx, canvas, el: document.createElement('div'), crashed: false };
+    const yieldUI = () => new Promise((r) => setTimeout(r, 0));
+    // replays the loop from t=0, calling fn(i) after each frame is drawn
+    const pass = async (fn, every = 1) => {
+      let st = {};
+      try { st = def.setup ? def.setup() || {} : {}; } catch { /* drawn as-is */ }
+      for (let i = 0; i < n; i++) {
+        const tt = i * dt;
+        render(s, tt, tt - dt, dt, st, false);
+        if (i % every === 0) await fn(i);
+      }
+    };
+    try {
+      toast('🎞️ making gif… 0%');
+      // pass 1: sample frames to build one shared palette
+      const samples = [];
+      await pass(async () => { samples.push(ctx.getImageData(0, 0, GW, GH).data); await yieldUI(); }, Math.max(1, Math.floor(n / 16)));
+      const pal = GIF.palette(samples);
+      const map = GIF.mapper(pal);
+      const gif = new GIF.Writer(GW, GH, pal);
+      // pass 2: encode every frame
+      await pass(async (i) => {
+        gif.frame(map(ctx.getImageData(0, 0, GW, GH).data), DELAY);
+        if (i % 6 === 0) { toast(`🎞️ making gif… ${Math.round((i / n) * 100)}%`); await yieldUI(); }
+      });
+      const blob = gif.finish();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `claudetok-${def.id}.gif`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      toast(`saved ${a.download} (${(blob.size / 1048576).toFixed(1)} MB) 🎞️`);
+    } catch (err) {
+      console.error('[claudetok] gif export failed', err);
+      toast('gif export failed 💀');
+    } finally {
+      gifBusy = false;
+    }
+  }
+
   function stopRecording(cancel) {
     if (!recording) return;
     recording.cancelled = !!cancel;
@@ -789,6 +840,7 @@
         case 'p': case 'P': if (slides[active]) openProfile(slides[active].def.author); break;
         case 'f': case 'F': setFeedMode(feedMode === 'foryou' ? 'following' : 'foryou'); break;
         case 's': case 'S': if (slides[active]) startRecording(slides[active]); break;
+        case 'g': case 'G': if (slides[active]) exportGif(slides[active].def); break;
         case 'Escape': closeSheets(); break;
       }
     });

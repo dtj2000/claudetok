@@ -77,6 +77,7 @@
       <div class="share-row">
         <button data-share="link"><span class="share-ic" style="background:#4F7FD9">🔗</span>copy link</button>
         <button data-share="save"><span class="share-ic" style="background:#E8845C">⬇️</span>save video</button>
+        <button data-share="gif"><span class="share-ic" style="background:#E5A93B">🎞️</span>export gif</button>
         <button data-share="subagent"><span class="share-ic" style="background:#2F8F7A">🐣</span>send to subagent</button>
         <button data-share="context"><span class="share-ic" style="background:#6B4E9B">🧠</span>add to context</button>
         <button data-share="duet"><span class="share-ic" style="background:#E0607E">👯</span>duet</button>
@@ -102,7 +103,7 @@
       <canvas id="splash-canvas"></canvas>
       <div class="splash-ui">
         <button class="splash-btn" id="splash-btn">tap to start scrolling</button>
-        <p class="splash-hint">↑↓ scroll · space pause · L like · C comments · P profile · F following · S save video · / search · M mute · A doomscroll</p>
+        <p class="splash-hint">↑↓ scroll · space pause · L like · C comments · P profile · F following · S save video · G gif · / search · M mute · A doomscroll</p>
       </div>
     </section>
 
@@ -117,6 +118,7 @@
 
   <!-- engine -->
   <script src="js/lib.js"></script>
+  <script src="js/gif.js"></script>
   <script src="js/app.js"></script>
   <!-- the list of videos; app.js loads each videos/<name>.js -->
   <script src="videos/playlist.js"></script>

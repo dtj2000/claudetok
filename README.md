@@ -23,6 +23,7 @@ server works, and double-clicking `index.html` works in most browsers too.
 | P | the author's profile |
 | F | switch between For You and Following |
 | S | save the video (records one loop to .mp4 / .webm) |
+| G | export the video as an animated GIF |
 | / | discover: search + trending hashtags |
 | M | mute |
 | A | doomscroll mode (Clawd's arm scrolls for you) |
@@ -52,6 +53,9 @@ fps readout, `?shuffle` shuffles the feed, `#<id>` starts the feed at a video.
 
 - Quick: press **S** (or share → save video) while it plays. The browser records one loop
   at 1080×1920 and downloads it.
+- GIF: press **G** (or share → export gif). It renders one loop offscreen at 360×640,
+  12.5 fps with a shared 256-color palette (`js/gif.js`, no dependencies) and downloads it.
+  Takes a few seconds; GIFs have no sound.
 - Frame-perfect: with `tools/serve.py` running, open `tools/export.html?v=<name>`. It
   renders every frame plus offline audio into `exports/<name>/` (keep the tab visible),
   then:
