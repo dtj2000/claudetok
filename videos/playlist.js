@@ -69,4 +69,5 @@ ClaudeTok.playlist([
   'human-in-the-loop',
   'defrag-asmr',
   'spot-the-difference',
+  'unboxing',
 ]);
